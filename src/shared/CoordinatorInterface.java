@@ -8,6 +8,7 @@ import java.util.List;
 
 public interface CoordinatorInterface extends Remote {
 
+    boolean register(String username, String password, String department) throws RemoteException;
     String login(String username, String password) throws RemoteException;
 //    String generateToken(String username) throws RemoteException;
 

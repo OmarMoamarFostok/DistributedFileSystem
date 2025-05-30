@@ -4,6 +4,7 @@ import shared.CoordinatorInterface;
 import shared.NodeInterface;
 import shared.User;
 
+import Storage.UserStorageService;
 import java.rmi.RemoteException;
 import java.rmi.registry.LocateRegistry;
 import java.rmi.registry.Registry;
@@ -23,6 +24,7 @@ public class CoordinatorServer extends UnicastRemoteObject implements Coordinato
 
     //the name of the file and the latest version
     //todo: make it map of map for departments
+    private final UserStorageService userStorage = UserStorageService.getInstance();
     private Map<String,String> metaFiles = new HashMap<>();
     private Map<String,String> userTokens = new HashMap<>();
     private Map<String,String> userDepartments = new HashMap<>();
@@ -30,16 +32,36 @@ public class CoordinatorServer extends UnicastRemoteObject implements Coordinato
     private int roundRobinIndex = 0;
     public CoordinatorServer() throws Exception {
         super();
-        userDepartments.put("alice","QA");
-        userDepartments.put("bob","development");
+        // userDepartments.put("alice","QA");
+        // userDepartments.put("bob","development");
     }
-
+    @Override
+    public boolean register(String username, String password, String department) throws RemoteException{
+        try {
+            User user = new User(username, password, department);
+            userStorage.store(user);
+            System.out.println("New user has arrived: " + username);
+            return true;
+        }
+        catch (Exception e){
+            System.err.println("Error registering user " + username + ": " + e.getMessage());
+            return false;
+        }
+    }
+    @Override
     public String login(String username, String password) {
-        if(userDepartments.containsKey(username)){
-            String token = UUID.randomUUID().toString();
-            userTokens.put(token,username);
-            return token;
-
+        try {
+            List<User> allUsers = userStorage.getAll();
+            for (User user : allUsers) {
+                if (user.username.equals(username) && user.password.equals(password)) {
+                    String token = UUID.randomUUID().toString();
+                    userTokens.put(token, username);
+                    System.out.println("User logged in: " + username + " with token: " + token);
+                    return token;
+                }
+            }
+        } catch (Exception e) {
+            System.err.println("Error during login for user " + username + ": " + e.getMessage());
         }
         return null;
     }
