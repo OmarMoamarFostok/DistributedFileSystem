@@ -55,7 +55,7 @@ public class RMIRaceTest {
         System.out.println("Successful downloads: " + checkSum.get());
     }
     public void deleteRaceTest(String department, String filename) throws Exception{
-        String token = coordinator.login("omar","123");
+        String token = coordinator.login("omar2","123");
         int threadsCount = 50;
         AtomicInteger checkSum = new AtomicInteger(0);
         ExecutorService executor = Executors.newFixedThreadPool(threadsCount);
@@ -162,9 +162,9 @@ public class RMIRaceTest {
         Registry registry = LocateRegistry.getRegistry("localhost", 1099);
         CoordinatorInterface coordinator = (CoordinatorInterface) registry.lookup("CoordinatorServer");
         RMIRaceTest test = new RMIRaceTest(coordinator);
-        test.nodeRaceTest("pool-1-thread-78030");
-//        test.deleteRaceTest("dev","pool-1-thread-78030");
-//        test.coordinatorRaceTest();
+//        test.nodeRaceTest("pool-1-thread-78030");
+//        test.deleteRaceTest("qa","pool-1-thread-1");
+        test.coordinatorRaceTest();
 //        test.downloadFromNodeRaceTest("qa","pool-1-thread-2");
         System.out.println("ended successfully");
 

@@ -10,6 +10,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.CyclicBarrier;
+import java.util.concurrent.TimeUnit;
 
 public class NodeSocketServer {
     private static final int EXPECTED_NODES = 3;
@@ -31,7 +32,11 @@ public class NodeSocketServer {
                     for (FileData file : incoming) {
                         latestFiles.merge(file.fullPath, file, (oldVal, newVal) -> newVal.version > oldVal.version ? newVal : oldVal);
                     }
-                    barrier.await();
+                    try {
+                    barrier.await(10, TimeUnit.SECONDS);
+                    } catch(Exception e) {
+                        e.printStackTrace();
+                    }
 
                     ObjectOutputStream out = new ObjectOutputStream(clientSocket.getOutputStream());
                     out.writeObject(new ArrayList<>(latestFiles.values()));

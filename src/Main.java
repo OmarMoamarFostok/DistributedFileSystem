@@ -15,19 +15,19 @@ public class Main {
         Registry registry = LocateRegistry.getRegistry("localhost",1099);
         CoordinatorInterface coordinator = (CoordinatorInterface) registry.lookup("CoordinatorServer");
         ClientApp client = new ClientApp(coordinator);
-        String token = coordinator.login("omar","123");
+        String token = coordinator.login("omar2","123");
         System.out.println(token);
 
 
 //        client.downloadFile(token,"firstUploadedfile","D:\\rubbish\\downladedFile.txt");
 //        coordinator.listFiles(token,"dev");
         byte[] fileData = Files.readAllBytes(Paths.get("C:/Users/Omar Fostok/Desktop/django.txt"));
-//        if(client.uploadFile(token,"dev","BRANDNEW2",fileData))
+//        if(client.uploadFile(token,"qa","BRANDNEW2",fileData))
 //        System.out.println("all modifications done!!!!");
 //        else
 //            System.out.println("something wrong happened");
-//        System.out.println(coordinator.deleteFile(token,"dev","pool-1-thread-4"));
-//        System.out.println(coordinator.register("omar2","123","qa"));
+        System.out.println(coordinator.deleteFile(token,"qa","BRANDNEW2"));
+//        System.out.println(coordinator.register("ahmad","123","qa"));
 //        client.listFiles();
 //        client.downloadFile("qa","pool-1-thread-16","D:\\rubbish\\downladedFile2.txt");
 

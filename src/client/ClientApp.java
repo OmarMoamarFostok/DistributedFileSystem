@@ -5,6 +5,7 @@ import shared.DownloadInstruction;
 import shared.UploadInstruction;
 
 import java.io.FileOutputStream;
+import java.rmi.Naming;
 import java.rmi.RemoteException;
 import java.util.List;
 import java.util.Map;
@@ -58,7 +59,7 @@ public class ClientApp {
 
 
         System.out.println("Client app running...");
-//        System.out.println(coordinator.register("omar","123","dev"));
+//        System.out.println(coordinator.register("ahmad","123","dev"));
 //        System.out.println(coordinator.login("omar","123"));
 
 

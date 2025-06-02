@@ -44,8 +44,8 @@ public class NodeServer extends UnicastRemoteObject implements NodeInterface {
     public void scheduleDailySyncToCentral(String serverAddress, int port) {
         Timer timer = new Timer();
         Calendar calendar = Calendar.getInstance();
-        calendar.set(Calendar.HOUR_OF_DAY, 7);
-        calendar.set(Calendar.MINUTE, 34);
+        calendar.set(Calendar.HOUR_OF_DAY, 12);
+        calendar.set(Calendar.MINUTE, 57);
         calendar.set(Calendar.SECOND, 0);
 
         if (calendar.getTime().before(new Date())) {
@@ -56,7 +56,7 @@ public class NodeServer extends UnicastRemoteObject implements NodeInterface {
             public void run() {
                 syncWithCentralServer(serverAddress, port);
             }
-        }, calendar.getTime(), 2*60 * 1000);
+        }, calendar.getTime(), 24*60*60 * 1000);
     }
     public void syncWithCentralServer(String serverHost, int port) {
         try {
@@ -112,7 +112,7 @@ public class NodeServer extends UnicastRemoteObject implements NodeInterface {
                 } catch (IOException e) {
                     e.printStackTrace();
                 }
-            } else {
+            } else if(version>0){
                 files.add(new FileData(path,version,null));
             }
         }
