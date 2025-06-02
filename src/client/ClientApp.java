@@ -1,15 +1,11 @@
 package client;
 
 import shared.CoordinatorInterface;
+import shared.DownloadInstruction;
 import shared.UploadInstruction;
 
 import java.io.FileOutputStream;
-import java.nio.file.Files;
-import java.nio.file.Paths;
-import java.rmi.Naming;
 import java.rmi.RemoteException;
-import java.rmi.registry.LocateRegistry;
-import java.rmi.registry.Registry;
 import java.util.List;
 import java.util.Map;
 
@@ -38,10 +34,13 @@ public class ClientApp {
         uploadInstr.targetNode.upload(uploadInstr.token,data);
         return true;
     }
-    public void downloadFile(String token ,String filename, String filedestination) throws RemoteException {
-        byte[] data = coordinator.viewFile(token,filename);
+    public void downloadFile(String department ,String filename, String fileDestination) throws RemoteException {
+        DownloadInstruction downloadInstr = (DownloadInstruction) coordinator.downloadFile(department,filename);
+        if(downloadInstr==null)
+            return;
+        byte[] data = downloadInstr.targetNode.download(downloadInstr.token);
         if(data != null) {
-            try(FileOutputStream fos = new FileOutputStream(filedestination)) {
+            try(FileOutputStream fos = new FileOutputStream(fileDestination)) {
                 fos.write(data);
                 System.out.println("file downloaded successfully");
             } catch (Exception e) {

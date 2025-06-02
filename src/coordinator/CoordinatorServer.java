@@ -31,11 +31,11 @@ public class CoordinatorServer extends UnicastRemoteObject implements Coordinato
 
 
 
-
+    private final Map<String, Object> fileLocks = new ConcurrentHashMap<>();
     private final UserStorageService userStorage = UserStorageService.getInstance();
-    private Map<String,String> userTokens = new ConcurrentHashMap<>();
-    private Map<String,String> userDepartments = new ConcurrentHashMap<>();
-    private List<NodeInterface> nodes = new ArrayList<>();
+    private final Map<String,String> userTokens = new ConcurrentHashMap<>();
+    private final Map<String,String> userDepartments = new ConcurrentHashMap<>();
+    public final List<NodeInterface> nodes = new ArrayList<>();
     private int roundRobinIndex = 0;
     private final Map<String, Set<String>> filesByDepartment = new ConcurrentHashMap<>();
 
@@ -44,6 +44,10 @@ public class CoordinatorServer extends UnicastRemoteObject implements Coordinato
         // userDepartments.put("alice","QA");
         // userDepartments.put("bob","development");
     }
+    private Object getFileLock(String filePath) {
+        return fileLocks.computeIfAbsent(filePath, k -> new Object());
+    }
+
     @Override
     public void notifyFileUploaded(String department, String filename, String nodeName) throws RemoteException {
         filesByDepartment
@@ -102,31 +106,10 @@ public class CoordinatorServer extends UnicastRemoteObject implements Coordinato
         return null;
 
     }
-
-
-    public NodeInterface editFile(String token, String department, String filename, byte[] data) throws RemoteException {
-        String user = userTokens.get(token);
-        if(user==null || !userDepartments.get(user).equals(department)) return null;
-        NodeInterface mxNode = null;
-        int mx = -1;
-        for(NodeInterface node: nodes) {
-            int ver =  node.getFileVersion(department,filename);
-            if(ver>mx) {
-                mx = node.getFileVersion(department,filename);
-                mxNode = node;
-            }
-        }
-//        if(mxNode!=null)
-//            return mxNode.upload(department,filename,data);
-//        return false;
-        return mxNode;
-
-    }
-
+    @Override
     public Instruction uploadFile(String token, String department, String filename) throws RemoteException {
         String user = userTokens.get(token);
         if(user==null || !userDepartments.get(user).equals(department)) return null;
-//        NodeInterface node = nodes.get(roundRobinIndex++ % nodes.size());
         NodeInterface mxNode = null;
         int mx = -1;
         for(NodeInterface node: nodes) {
@@ -142,28 +125,13 @@ public class CoordinatorServer extends UnicastRemoteObject implements Coordinato
                 cntMxNodes++;
         if(cntMxNodes==nodes.size())
             mxNode = nodes.get(roundRobinIndex++ % nodes.size());
-//        metaFiles.put(department + "/" + filename, 0);
         String uploadToken = UUID.randomUUID().toString();
         instructionTokens.put(uploadToken,new UploadInstruction(department,filename,mxNode,uploadToken));
         return instructionTokens.get(uploadToken);
-//        return node.upload(department,filename,data);
 
     }
-
-
-    public byte[] viewFile(String token, String filename) throws RemoteException {
-
-        for(NodeInterface node: nodes) {
-            byte[] data = node.view(filename);
-            if(data!=null) return data;
-        }
-        return null;
-    }
-
-
-    public boolean deleteFile(String token, String department, String filename) throws RemoteException {
-        String user = userTokens.get(token);
-        if(user==null || !userDepartments.get(user).equals(department))return false;
+    @Override
+    public Instruction downloadFile(String department, String filename) throws RemoteException {
         NodeInterface mxNode = null;
         int mx = -1;
         for(NodeInterface node: nodes) {
@@ -179,12 +147,40 @@ public class CoordinatorServer extends UnicastRemoteObject implements Coordinato
                 cntMxNodes++;
         if(cntMxNodes==nodes.size())
             mxNode = nodes.get(roundRobinIndex++ % nodes.size());
-
-        if(mxNode!=null)
-            return mxNode.delete(department,filename);
-        return false;
+        String downloadToken = UUID.randomUUID().toString();
+        instructionTokens.put(downloadToken,new DownloadInstruction(department,filename,mxNode,downloadToken));
+        return instructionTokens.get(downloadToken);
     }
+    @Override
+    public boolean deleteFile(String token, String department, String filename) throws RemoteException {
+        String user = userTokens.get(token);
+        if(user==null || !userDepartments.get(user).equals(department))return false;
+        String fileKey = department + "/" + filename;
+        Object lock = getFileLock(fileKey);
+        synchronized (lock) {
+            NodeInterface mxNode = null;
+            int mx = -1;
+            for(NodeInterface node: nodes) {
+                int ver =  node.getFileVersion(department,filename);
+                if(ver>mx) {
+                    mx = node.getFileVersion(department,filename);
+                    mxNode = node;
+                }
+            }
+            int cntMxNodes = 0;
+            for(NodeInterface node: nodes)
+                if(node.getFileVersion(department,filename)==mx)
+                    cntMxNodes++;
+            if(cntMxNodes==nodes.size())
+                mxNode = nodes.get(roundRobinIndex++ % nodes.size());
 
+            if(mxNode!=null)
+                return mxNode.delete(department,filename);
+            return false;
+        }
+
+    }
+    @Override
     public Map<String, List<String>> listFiles() {
 
         System.out.println("Files in my system are returned");
@@ -194,6 +190,7 @@ public class CoordinatorServer extends UnicastRemoteObject implements Coordinato
         }
         return result;
     }
+    @Override
     public void registerNode(NodeInterface node) {
         nodes.add(node);
         System.out.println("Registered node: success");
