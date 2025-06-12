@@ -32,5 +32,11 @@ public class Main {
 //        client.downloadFile("qa","pool-1-thread-16","D:\\rubbish\\downladedFile2.txt");
 
 
+
+
+    }
+
+    public void hello(){
+        System.out.println("hello");
     }
 }
