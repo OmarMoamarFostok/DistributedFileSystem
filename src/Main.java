@@ -33,8 +33,4 @@ public class Main {
 
 
     }
-
-    public void hello2(){
-        System.out.println("hello2");
-    }
 }
